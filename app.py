@@ -13,7 +13,7 @@ app = Flask(__name__)
 
 def extract_features(email):
     ext = tldextract.extract(email)
-    username = email.split('@')[0]
+    username, _, _ = email.partition('@')
     domain = ext.domain + '.' + ext.suffix
     suffix = ext.suffix
     subdomain = ext.subdomain
@@ -42,10 +42,14 @@ def extract_features(email):
 def predict():
     data = request.get_json()
 
-    if not data or 'email' not in data:
+    if not data or 'email' not in data or not data['email']:
         return jsonify({'error': 'No email address provided'}), 400
 
     email = data['email']
+
+    if not re.match(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$", email):
+        return jsonify({'error': 'Invalid email format'}), 400
+    
     features = extract_features(email)
 
     df = pd.DataFrame([features])
